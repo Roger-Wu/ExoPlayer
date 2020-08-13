@@ -22,6 +22,7 @@ import android.content.res.AssetManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.JsonReader;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -51,6 +52,8 @@ import com.google.android.exoplayer2.upstream.DefaultDataSource;
 import com.google.android.exoplayer2.util.Assertions;
 import com.google.android.exoplayer2.util.Log;
 import com.google.android.exoplayer2.util.Util;
+import com.nbsp.materialfilepicker.MaterialFilePicker;
+import com.nbsp.materialfilepicker.ui.FilePickerActivity;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -64,6 +67,7 @@ public class SampleChooserActivity extends AppCompatActivity
     implements DownloadTracker.Listener, OnChildClickListener {
 
   private static final String TAG = "SampleChooserActivity";
+  private final int PICK_FILE_REQUEST_CODE = 10;
 
   private String[] uris;
   private boolean useExtensionRenderers;
@@ -118,6 +122,66 @@ public class SampleChooserActivity extends AppCompatActivity
     } catch (IllegalStateException e) {
       DownloadService.startForeground(this, DemoDownloadService.class);
     }
+
+    // if READ_EXTERNAL_STORAGE permission is not yet granted, request for it.
+    Util.maybeRequestReadExternalStoragePermission(this, Uri.parse("/"));
+  }
+
+  public void onPickFileItemClicked(MenuItem item) {
+    pickFileToPlay();
+  }
+
+  private void pickFileToPlay() {
+    // if READ_EXTERNAL_STORAGE permission is not yet granted, request for it.
+    if (Util.maybeRequestReadExternalStoragePermission(this, Uri.parse("/"))) {
+      return;
+    }
+
+    new MaterialFilePicker()
+        .withActivity(this)
+        .withCloseMenu(true)
+        .withPath(Environment.getExternalStorageDirectory().getPath())
+        .withRootPath(Environment.getExternalStorageDirectory().getPath())
+        .withHiddenFiles(true)
+        .withFilterDirectories(false)
+        .withRequestCode(PICK_FILE_REQUEST_CODE)
+        .start();
+  }
+
+  @Override
+  protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
+
+    if (requestCode == PICK_FILE_REQUEST_CODE && resultCode == RESULT_OK) {
+      String filePath = data.getStringExtra(FilePickerActivity.RESULT_FILE_PATH);
+      playLocalFile(filePath);
+    }
+  }
+
+  private void playLocalFile(String filePath) {
+    UriSample uriSample = new UriSample(
+        null,
+        Uri.parse(filePath),
+        null,
+        false,
+        null,
+        null,
+        null,
+        null);
+
+    Sample sample = (Sample) uriSample;
+    Intent intent = new Intent(this, PlayerActivity.class);
+    intent.putExtra(
+        PlayerActivity.PREFER_EXTENSION_DECODERS_EXTRA,
+        isNonNullAndChecked(preferExtensionDecodersMenuItem));
+    String abrAlgorithm =
+        isNonNullAndChecked(randomAbrMenuItem)
+            ? PlayerActivity.ABR_ALGORITHM_RANDOM
+            : PlayerActivity.ABR_ALGORITHM_DEFAULT;
+    intent.putExtra(PlayerActivity.ABR_ALGORITHM_EXTRA, abrAlgorithm);
+    intent.putExtra(PlayerActivity.TUNNELING_EXTRA, isNonNullAndChecked(tunnelingMenuItem));
+    sample.addToIntent(intent);
+    startActivity(intent);
   }
 
   @Override

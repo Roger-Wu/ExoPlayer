@@ -73,4 +73,6 @@
 
   <string name="tunneling">Request multimedia tunneling</string>
 
+  <string name="pick_a_file_to_play">Pick a file to play</string>
+
 </resources>

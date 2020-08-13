@@ -25,7 +25,8 @@ android {
     defaultConfig {
         versionName project.ext.releaseVersion
         versionCode project.ext.releaseVersionCode
-        minSdkVersion project.ext.minSdkVersion
+//        minSdkVersion project.ext.minSdkVersion
+        minSdkVersion 19
         targetSdkVersion project.ext.appTargetSdkVersion
     }
 
@@ -65,6 +66,7 @@ dependencies {
     implementation 'androidx.annotation:annotation:' + androidxAnnotationVersion
     implementation 'androidx.appcompat:appcompat:' + androidxAppCompatVersion
     implementation 'com.google.android.material:material:1.1.0'
+    implementation 'com.nbsp:materialfilepicker:1.9.1'
     implementation project(modulePrefix + 'library-core')
     implementation project(modulePrefix + 'library-dash')
     implementation project(modulePrefix + 'library-hls')
